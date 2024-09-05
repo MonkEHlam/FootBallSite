@@ -1,1 +1,0 @@
-document.write("There'll be a nice site")
