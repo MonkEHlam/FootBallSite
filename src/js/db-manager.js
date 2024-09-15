@@ -1,56 +1,148 @@
-const mysql = require("mysql2");
+const { Sequelize, DataTypes, Op } = require('sequelize')
+const {DATABASE_NAME, DATABASE_USERNAME, DATABASE_PASSWORD} = require("../../config")
+const constants = require("../../constants")
+// Create an instance of sequelize
+const sequelize =
+    new Sequelize(DATABASE_NAME,
+        DATABASE_USERNAME,
+        DATABASE_PASSWORD, {
+        host: 'localhost',
+        dialect: 'mysql',
+        define: {
+            initialAutoIncrement: false
+        }        
+    })
 
-module.exports = {AddNewTournament,};
+// Validate and connect to the database
+sequelize.authenticate().then(
+    () => console.log('Successfully connected to the database!')).catch(
+        (error) => console.log('Failed to connect the database:', error));
 
-const codetypes = Object.freeze({
-    TOURNAMENT: 1,
-    RENT: 2,
+const Tournament = sequelize.define("tournament",{
+    code: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        primaryKey: true,
+        unique: true,
+        allowNull: false
+    },
+    date:{
+        type: DataTypes.DATE,
+        allowNull: false,
+        unique: true
+    },
+    name:{
+        type: DataTypes.STRING
+    },
+    quantityOfPeople:{
+        type: DataTypes.INTEGER
+    }
 })
 
-const connection = mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    database: "football",
-    password: "Qwadrat12543SQL"
-});
-
-connection.connect(function(err){
-    if (err){
-        console.log(err.message, err)
+const Rent = sequelize.define("rent", {
+    code: 
+    {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        primaryKey: true,
+        unique: true,
+        allowNull: false
+    },
+    date:
+    {
+        type: DataTypes.DATEONLY,
+        allowNull: false
+    },
+    time: 
+    {
+        type: DataTypes.TIME,
+        allowNull: false
+    },
+    areaID:
+    {
+        type: DataTypes.TINYINT,
+        allowNull: false
     }
-    else{
-        console.log("Подключение к серверу MySQL успешно установлено")
+})
+
+const Client = sequelize.define("client", {
+    id:{
+        type: DataTypes.INTEGER,
+        allowNull:false,
+        autoIncrement: true,
+        primaryKey: true,
+        unique: true
+    },
+    fullname: {
+        type: DataTypes.STRING,
+        allowNull: false,
+    },
+    servicetype: {
+        type: DataTypes.TINYINT,
+        allowNull: false
+    },
+    servicecode:{
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    email: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    phonenumber: {
+        type: DataTypes.STRING,
+        allowNull: false
     }
-});
+}) 
 
-function AddNewTournament(name, date, qtyOfPeople){
-    connection.query("INSERT INTO tournaments(code, date, name, qauntityOfPeople) VALUES (?, ?, ?, ?)", [GenerateCode(codetypes.TOURNAMENT), date, name, qtyOfPeople], function(err){
-        if (err) console.log(err.message);})}
+Tournament.hasMany(Client)
+Client.hasMany(Rent)
+Rent.hasOne(Client)
 
 
-function GenerateCode(codetype){
-    let code
-    switch (codetype){
-        case codetypes.RENT:
-            code = "R";
-            break;
-        case codetypes.TOURNAMENT:
-            code = "T";
-            break;
-        default:
-            throw new Error("Unknown codetype.");
+console.log('The table for models was just (re)created!');
+
+// Rents
+
+async function CleanOldData(){
+    let condition = {where:{
+        data:{
+        [Op.lt]: new Date(new Date() - constants.serverConstants.rentSavingDays * 24 * 60 * 60 * 1000) 
     }
-    let res
-    do{
-        code += `${Math.round(Math.random() * (999 - 100) + 100)}`;
-        connection.query("SELECT 1 FROM tournaments WHERE code=?",code, function(err, result){
-        if (err){
-            console.log(err.message);
-        }
-        else{
-            res = result
-        }
-    })}
-    while(res)
-    return code;
+    }}
+    Rent.destroy(condition)
+    Tournament.destroy(condition)
 }
+
+async function CreateNewRentDay() {
+    try{
+    let newDay = new Date(
+        new Date() + constants.productConstants.futureRentDays * 24 * 60 * 60 * 1000
+    )
+    for (
+        let rentHour = 1; 
+        rentHour <= constants.productConstants.stadiumRentCloses - constants.productConstants.stadiumRentOpening; 
+        rentHour++){
+        for (let rentArea = 1; rentArea <= constants.productConstants.rentableAreas; rentArea++){
+            let newTime = `${9 + rentHour}:00`;
+            Rent.findOne({where:{
+                [Op.and]: [{date:newDay}, {time: newTime}]}})
+                .then(exists =>{
+                    if (!exists){
+                        Rent.create({date: newDay, time: newTime, areaID: rentArea})}})
+        }
+        }
+        }
+        catch(err){
+            console.log(err)
+        }
+}
+
+module.exports = 
+{
+    Rent,
+    Client,
+    Tournament,
+    CleanOldData,
+    CreateNewRentDay,
+};
