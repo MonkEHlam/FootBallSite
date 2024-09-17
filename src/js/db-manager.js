@@ -62,6 +62,10 @@ const Rent = sequelize.define("rent", {
     {
         type: DataTypes.TINYINT,
         allowNull: false
+    },
+    isAvailable:{
+        type: DataTypes.BOOLEAN,
+        defaultValue: 1
     }
 })
 
@@ -100,6 +104,7 @@ Client.hasMany(Rent)
 Rent.hasOne(Client)
 
 
+// Rent.sync({alter:true}).catch(err => console.log(err))
 console.log('The table for models was just (re)created!');
 
 // Rents
