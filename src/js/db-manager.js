@@ -16,7 +16,7 @@ const sequelize =
 // Validate and connect to the database
 sequelize.authenticate().then(
     () => console.log('Successfully connected to the database!')).catch(
-        (error) => console.log('Failed to connect the database:', error));
+        (error) => console.error('Failed to connect the database:', error));
 
 const Tournament = sequelize.define("tournament",{
     code: {
@@ -103,8 +103,11 @@ Tournament.hasMany(Client)
 Client.hasMany(Rent)
 Rent.hasOne(Client)
 
-
-// Rent.sync({alter:true}).catch(err => console.log(err))
+Tournament.sync({alter: true}).finally(()=>{
+    Client.sync({alter: true}).finally(() => {
+        Rent.sync({alter: true})
+    })
+}).catch(err => console.error(err))
 console.log('The table for models was just (re)created!');
 
 // Rents
@@ -112,34 +115,34 @@ console.log('The table for models was just (re)created!');
 async function CleanOldData(){
     let condition = {where:{
         data:{
-        [Op.lt]: new Date(new Date() - constants.serverConstants.rentSavingDays * 24 * 60 * 60 * 1000) 
+        [Op.lt]: new Date().setDate(new Date().getDate() - constants.serverConstants.rentSavingDays) 
     }
     }}
-    Rent.destroy(condition)
-    Tournament.destroy(condition)
+    Rent.destroy(condition).finally(() => 
+        Tournament.destroy(condition))
+    .catch(err => console.error("Catch error on cleaning:\n" + err))
+    
 }
 
 async function CreateNewRentDay() {
     try{
-    let newDay = new Date(
-        new Date() + constants.productConstants.futureRentDays * 24 * 60 * 60 * 1000
-    )
-    for (
-        let rentHour = 1; 
-        rentHour <= constants.productConstants.stadiumRentCloses - constants.productConstants.stadiumRentOpening; 
-        rentHour++){
-        for (let rentArea = 1; rentArea <= constants.productConstants.rentableAreas; rentArea++){
-            let newTime = `${9 + rentHour}:00`;
-            Rent.findOne({where:{
-                [Op.and]: [{date:newDay}, {time: newTime}]}})
-                .then(exists =>{
-                    if (!exists){
-                        Rent.create({date: newDay, time: newTime, areaID: rentArea})}})
-        }
-        }
+        let newDay = new Date().setDate(new Date().getDate() + constants.productConstants.futureRentDays);
+        for (
+            let rentHour = 1; 
+            rentHour <= constants.productConstants.stadiumRentCloses - constants.productConstants.stadiumRentOpening; 
+            rentHour++){
+            for (let rentArea = 1; rentArea <= constants.productConstants.rentableAreas; rentArea++){
+                let newTime = `${constants.productConstants.stadiumRentOpening + rentHour}:00`;
+                Rent.findOne({where:{
+                    [Op.and]: [{date:newDay}, {time: newTime}]}})
+                    .then(exists =>{
+                        if (!exists){
+                            Rent.create({date: newDay, time: newTime, areaID: rentArea})}})
+            }
+            }
         }
         catch(err){
-            console.log(err)
+            console.error("Catch error on creating rent day:\n" + err)
         }
 }
 
