@@ -1,0 +1,43 @@
+<div class="section is-medium">
+  <div class="container">
+    <div class="columns is-vcentered">
+      <div class="column is-four-fifths">
+        <nav role="grid">
+
+        </nav>
+        <div class="pitches" data-slick='{"slidesToShow": 4, "slidesToScroll": 4}'>
+          {{#each rentDays}}
+            {{createRentColumn}}
+          {{/each}}
+        </div>
+      </div>
+      <div class="column">
+        <div class="field is-grouped">
+          <div class="control">
+            <button id="makeRentBtn" class="button is-link modal-trigger" data-target="modal-makeClient">Submit</button>
+          </div>
+          <div class="control">
+            <button class="button is-link is-light modal-trigger" data-target="modal-clear">Clear</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{{>makeClient}}
+<div id="modal-clear" class="modal">
+  <div class="modal-background"></div>
+  <div class="modal-content">
+    <div class="notification">
+      <div class="columns is-gap-3">
+        <div class="column is-two-thirds">Очистить выбранное?</div>
+        <button id="clearRentsBtn" class="column button is-primary">Да</button>
+        <button class="column button is-danger">Нет</button>
+      </div>
+    </div>
+  </div>
+  <button class="modal-close is-large" aria-label="close"></button>
+</div>
+<script src="/dist/jquery.min.js"></script>
+<script src="slick/slick.min.js"></script> 
+<script src="/js/rents.js"></script>
