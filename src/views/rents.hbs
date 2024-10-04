@@ -2,10 +2,8 @@
   <div class="container">
     <div class="columns is-vcentered">
       <div class="column is-four-fifths">
-        <nav role="grid">
-
-        </nav>
-        <div class="pitches" data-slick='{"slidesToShow": 4, "slidesToScroll": 4}'>
+        <nav class="slick-nav"></nav>
+        <div class="pitches">
           {{#each rentDays}}
             {{createRentColumn}}
           {{/each}}

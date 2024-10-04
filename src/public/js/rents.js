@@ -1,5 +1,4 @@
-const gridNotifications = document.querySelectorAll(".column .notification");
-const columns = document.querySelectorAll(".columns .is-multiline div.day");
+const gridNotifications = $(".column .notification");
 const clientForm = document.forms["clientForm"];
 
 async function createRent(name, email, phone, rents) {
@@ -52,36 +51,24 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-document.getElementById("clearRentsBtn").addEventListener("click", () =>
-    gridNotifications.forEach(notif =>{
-        if (notif.classList.contains("is-success"))
-            notif.classList.remove("is-success")
-    })
-);
-
 window.addEventListener("resize",()=> {
     let winSize = document.body.clientWidth;
-    var today = new Date();
     var colQty;
     if (winSize <= 768)
-        colQty = 0;
-    else if(winSize < 1024)
         colQty = 1;
-    else if (winSize < 1260)
+    else if(winSize < 1024)
         colQty = 2;
-    else
+    else if (winSize < 1260)
         colQty = 3;
-
-    columns.forEach(col =>{
-        if (Math.abs(today.getDate() - parseInt(col.id)) > colQty)
-            col.classList.add("is-hidden");
-        else
-            col.classList.contains("is-hidden") ? col.classList.remove("is-hidden") : undefined
-    })
+    else
+        colQty = 4;
+    $(".pitches").slick('slickSetOption', {
+      slidesToShow: colQty,
+    }, true);
 });
 
-gridNotifications.forEach(notif =>{
-    notif.addEventListener("click", ()=>{
+gridNotifications.map((index, notif)=>{
+    $(notif).on("click", ()=>{
       if (notif.classList.contains("is-info")){
         if (notif.classList.contains("is-light"))
             notif.classList.remove("is-light");
@@ -93,7 +80,7 @@ gridNotifications.forEach(notif =>{
 clientForm.addEventListener("submit", e => {
     e.preventDefault();
     let rents = []
-    gridNotifications.forEach(notif =>{
+    gridNotifications.each((index, notif)=>{
       if(notif.classList.contains("is-success")){
         date = notif.closest(".day").children.item(0).textContent;
         rents.push({
@@ -106,6 +93,14 @@ clientForm.addEventListener("submit", e => {
     createRent(clientForm.fullname.value, clientForm.email.value, clientForm.phone.value, rents)
 })
 
-$(".pitches").slick()
-
+$(".pitches").slick({
+  infinite: false,
+  prevArrow: 
+  `<button type="button" class="button">prev
+  </button>`,
+  nextArrow:
+  `<button type="button" class="button">next
+  </button>`,
+  appendArrows: $(".slick-nav"),
+})
 window.dispatchEvent(new Event("resize"))

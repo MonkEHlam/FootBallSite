@@ -43747,3 +43747,20 @@ has-background-danger.is-hoverable:active {
   border-bottom-style: solid;
   border-bottom-color: hsl(171, 100%, 41%);
 }/*# sourceMappingURL=style.css.map */
+
+.pitches {
+  position: relative;
+}
+.slick-arrow {
+  position: relative;
+  top: 25px;
+  z-index: 1;
+}
+
+.slick-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  align-content: space-between;
+}
